@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<body>
+<pre>
+#SingleInstance Force
+#MaxThreadsPerHotkey 2
+
+^+z::ExitApp
+
+^+v::
+    if (A_IsSuspended)
+    {
+        Suspend, Off
+        return
+    }
+    Suspend, On
+    text := Clipboard
+    Send, ^a
+    Sleep, 200
+    Send, {Delete}
+    Sleep, 200
+    Loop, Parse, text, `n, `r
+    {
+        line := A_LoopField
+        Send, {Home}
+        Send, +{End}
+        Send, {Delete}
+        Sleep, 10
+        SendRaw, %line%
+        Send, {Enter}
+        Sleep, 20
+    }
+    Suspend, Off
+return
+</pre>
+</body>
+</html>
