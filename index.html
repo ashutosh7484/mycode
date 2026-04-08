@@ -4,17 +4,39 @@
 <pre>
 #SingleInstance Force
 #MaxThreadsPerHotkey 2
-
 ^+z::ExitApp
 
+; --- Queue storage ---
+global clipQueue := []
+global pasteIndex := 0
+
+; Ctrl+Shift+C → Add current clipboard to queue
+^+c::
+    item := Clipboard
+    if (item != "") {
+        clipQueue.Push(item)
+        ToolTip, % "Queued #" clipQueue.MaxIndex() ": " SubStr(item, 1, 40) (StrLen(item) > 40 ? "..." : "")
+        SetTimer, ClearToolTip, -1500
+    }
+return
+
+; Ctrl+Shift+V → Paste next item from queue in serial order
 ^+v::
-    if (A_IsSuspended)
-    {
-        Suspend, Off
+    if (clipQueue.MaxIndex() = 0) {
+        ToolTip, Queue is empty!
+        SetTimer, ClearToolTip, -1500
         return
     }
+    pasteIndex++
+    if (pasteIndex > clipQueue.MaxIndex()) {
+        ToolTip, % "End of queue (" clipQueue.MaxIndex() " items). Press Ctrl+Shift+X to reset."
+        SetTimer, ClearToolTip, -2000
+        pasteIndex := clipQueue.MaxIndex()
+        return
+    }
+    text := clipQueue[pasteIndex]
+
     Suspend, On
-    text := Clipboard
     Send, ^a
     Sleep, 200
     Send, {Delete}
@@ -31,6 +53,21 @@
         Sleep, 20
     }
     Suspend, Off
+
+    ToolTip, % "Pasted #" pasteIndex " of " clipQueue.MaxIndex()
+    SetTimer, ClearToolTip, -1500
+return
+
+; Ctrl+Shift+X → Clear queue and reset index
+^+x::
+    clipQueue := []
+    pasteIndex := 0
+    ToolTip, Queue cleared!
+    SetTimer, ClearToolTip, -1500
+return
+
+ClearToolTip:
+    ToolTip
 return
 
     https://hive.smartinterviews.in/contests/smart-interviews-primary/problems?page=7&pageSize=10
